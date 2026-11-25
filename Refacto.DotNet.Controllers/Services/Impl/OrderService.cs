@@ -32,7 +32,7 @@ namespace Refacto.DotNet.Controllers.Services.Impl
                 }
                 else if (p.Type == "SEASONAL")
                 {
-                    HandleSeasonalProduct(p);
+                    productService.HandleSeasonalProduct(p);
                 }
                 else if (p.Type == "EXPIRABLE")
                 {
@@ -53,19 +53,6 @@ namespace Refacto.DotNet.Controllers.Services.Impl
             else
             {
                 productService.HandleExpiredProduct(p);
-            }
-        }
-
-        private void HandleSeasonalProduct(Entities.Product p)
-        {
-            if (DateTime.Now.Date > p.SeasonStartDate && DateTime.Now.Date < p.SeasonEndDate && p.Available > 0)
-            {
-                p.Available -= 1;
-                _ = appDbContext.SaveChanges();
-            }
-            else
-            {
-                productService.HandleSeasonalProduct(p);
             }
         }
 

@@ -24,7 +24,11 @@ namespace Refacto.DotNet.Controllers.Services.Impl
 
         public void HandleSeasonalProduct(Product p)
         {
-            if (DateTime.Now.AddDays(p.LeadTime) > p.SeasonEndDate)
+            if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
+            {
+                productRepository.DecrementPorductAvailability(p);
+            }
+            else if (DateTime.Now.AddDays(p.LeadTime) > p.SeasonEndDate)
             {
                 notificationService.SendOutOfStockNotification(p.Name);
 
