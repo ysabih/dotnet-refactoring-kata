@@ -76,7 +76,7 @@ namespace Refacto.DotNet.Controllers.Controllers
                 }
             }
 
-            return new ProcessOrderResponse(order.Id);
+            return new ProcessOrderResponse { Id = order.Id };
         }
     }
 }
