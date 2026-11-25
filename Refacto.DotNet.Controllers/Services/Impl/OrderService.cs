@@ -6,10 +6,10 @@ namespace Refacto.DotNet.Controllers.Services.Impl
 {
     public class OrderService
     {
-        private readonly ProductService productService;
+        private readonly IProductService productService;
         private readonly AppDbContext appDbContext;
 
-        public OrderService(AppDbContext appDbContext, ProductService productService)
+        public OrderService(AppDbContext appDbContext, IProductService productService)
         {
             this.appDbContext = appDbContext;
             this.productService = productService;
