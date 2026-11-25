@@ -28,49 +28,64 @@ namespace Refacto.DotNet.Controllers.Services.Impl
             {
                 if (p.Type == "NORMAL")
                 {
-                    if (p.Available > 0)
-                    {
-                        p.Available -= 1;
-                        appDbContext.Entry(p).State = EntityState.Modified;
-                        _ = appDbContext.SaveChanges();
-
-                    }
-                    else
-                    {
-                        int leadTime = p.LeadTime;
-                        if (leadTime > 0)
-                        {
-                            productService.NotifyDelay(leadTime, p);
-                        }
-                    }
+                    HandleNormalProduct(p);
                 }
                 else if (p.Type == "SEASONAL")
                 {
-                    if (DateTime.Now.Date > p.SeasonStartDate && DateTime.Now.Date < p.SeasonEndDate && p.Available > 0)
-                    {
-                        p.Available -= 1;
-                        _ = appDbContext.SaveChanges();
-                    }
-                    else
-                    {
-                        productService.HandleSeasonalProduct(p);
-                    }
+                    HandleSeasonalProduct(p);
                 }
                 else if (p.Type == "EXPIRABLE")
                 {
-                    if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
-                    {
-                        p.Available -= 1;
-                        _ = appDbContext.SaveChanges();
-                    }
-                    else
-                    {
-                        productService.HandleExpiredProduct(p);
-                    }
+                    HandleExpirableProduct(p);
                 }
             }
 
             return new ProcessOrderResponse { Id = order.Id };
+        }
+
+        private void HandleExpirableProduct(Entities.Product p)
+        {
+            if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
+            {
+                p.Available -= 1;
+                _ = appDbContext.SaveChanges();
+            }
+            else
+            {
+                productService.HandleExpiredProduct(p);
+            }
+        }
+
+        private void HandleSeasonalProduct(Entities.Product p)
+        {
+            if (DateTime.Now.Date > p.SeasonStartDate && DateTime.Now.Date < p.SeasonEndDate && p.Available > 0)
+            {
+                p.Available -= 1;
+                _ = appDbContext.SaveChanges();
+            }
+            else
+            {
+                productService.HandleSeasonalProduct(p);
+            }
+        }
+
+        private void HandleNormalProduct(Entities.Product p)
+        {
+            if (p.Available > 0)
+            {
+                p.Available -= 1;
+                appDbContext.Entry(p).State = EntityState.Modified;
+                _ = appDbContext.SaveChanges();
+
+            }
+            else
+            {
+                int leadTime = p.LeadTime;
+                if (leadTime > 0)
+                {
+                    productService.NotifyDelay(leadTime, p);
+                }
+            }
         }
     }
 }
