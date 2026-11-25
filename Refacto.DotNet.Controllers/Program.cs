@@ -17,9 +17,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     _ = options.UseInMemoryDatabase($"InMemoryDb");
 });
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<OrderService>();
+AddRepositories(builder);
+AddBusinessServices(builder);
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
 
@@ -40,5 +39,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void AddBusinessServices(WebApplicationBuilder builder)
+{
+    builder.Services.AddScoped<IProductService, ProductService>();
+    builder.Services.AddScoped<OrderService>();
+}
+
+static void AddRepositories(WebApplicationBuilder builder)
+{
+    builder.Services.AddScoped<IProductRepository, ProductRepository>();
+}
 
 public partial class Program { }
