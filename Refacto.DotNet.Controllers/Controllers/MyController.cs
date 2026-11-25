@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Refacto.DotNet.Controllers.Database.Context;
 using Refacto.DotNet.Controllers.Dtos.Product;
 using Refacto.DotNet.Controllers.Services.Impl;
 
@@ -10,73 +8,18 @@ namespace Refacto.DotNet.Controllers.Controllers
     [Route("orders")]
     public class OrdersController : ControllerBase
     {
-        private readonly ProductService productService;
-        private readonly AppDbContext appDbContext;
+        private readonly OrderService orderService;
 
-        public OrdersController(ProductService ps, AppDbContext ctx)
+        public OrdersController(OrderService productService)
         {
-            productService = ps;
-            appDbContext = ctx;
+            this.orderService = productService;
         }
 
         [HttpPost("{orderId}/processOrder")]
         [ProducesResponseType(200)]
         public ActionResult<ProcessOrderResponse> ProcessOrder(long orderId)
         {
-            Entities.Order? order = appDbContext.Orders
-                .Include(o => o.Items)
-                .SingleOrDefault(o => o.Id == orderId);
-            Console.WriteLine(order);
-            List<long> ids = new() { orderId };
-            ICollection<Entities.Product>? products = order.Items;
-
-            foreach (Entities.Product p in products)
-            {
-                if (p.Type == "NORMAL")
-                {
-                    if (p.Available > 0)
-                    {
-                        p.Available -= 1;
-                        appDbContext.Entry(p).State = EntityState.Modified;
-                        _ = appDbContext.SaveChanges();
-
-                    }
-                    else
-                    {
-                        int leadTime = p.LeadTime;
-                        if (leadTime > 0)
-                        {
-                            productService.NotifyDelay(leadTime, p);
-                        }
-                    }
-                }
-                else if (p.Type == "SEASONAL")
-                {
-                    if (DateTime.Now.Date > p.SeasonStartDate && DateTime.Now.Date < p.SeasonEndDate && p.Available > 0)
-                    {
-                        p.Available -= 1;
-                        _ = appDbContext.SaveChanges();
-                    }
-                    else
-                    {
-                        productService.HandleSeasonalProduct(p);
-                    }
-                }
-                else if (p.Type == "EXPIRABLE")
-                {
-                    if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
-                    {
-                        p.Available -= 1;
-                        _ = appDbContext.SaveChanges();
-                    }
-                    else
-                    {
-                        productService.HandleExpiredProduct(p);
-                    }
-                }
-            }
-
-            return new ProcessOrderResponse { Id = order.Id };
+            return orderService.ProcessOrder(orderId);
         }
     }
 }
