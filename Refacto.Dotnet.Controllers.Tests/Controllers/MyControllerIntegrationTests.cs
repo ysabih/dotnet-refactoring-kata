@@ -70,13 +70,73 @@ namespace Refacto.Dotnet.Controllers.Tests.Controllers
         }
 
         [Fact]
-        public async Task ProcessNormalAvailableProduct_ShouldReturnAndProductAvailabilityDecrease()
+        public async Task ProcessNormalAvailableProduct_ShouldReturnAndProductAndDecreaseAvailability()
         {
             HttpClient client = _factory.CreateClient();
 
             List<Product> allProducts = new List<Product>
             {
                 new Product { Id = 1, LeadTime = 15, Available = 30, Type = "NORMAL", Name = "USB Cable" },
+            };
+            HashSet<Product> orderItems = new(allProducts);
+            Order order = CreateOrder(orderItems);
+            await _context.Products.AddRangeAsync(allProducts);
+            _ = await _context.Orders.AddAsync(order);
+            _ = await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+
+            HttpResponseMessage response = await client.PostAsync($"/orders/{order.Id}/processOrder", null);
+            _ = response.EnsureSuccessStatusCode();
+
+            Order? resultOrder = await _context.Orders.FindAsync(order.Id);
+
+            // T0DO: Improve assertion after adding product list to response DTO
+            Assert.Equal(resultOrder.Id, order.Id);
+
+            Product? resultProduct = await _context.Products.FindAsync(allProducts[0].Id);
+
+            // TODO: Improve assertion to reference product above
+            Assert.Equal(29, resultProduct.Available);
+        }
+
+        [Fact]
+        public async Task ProcessExpirableAvailableProduct_ShouldReturnAndProductAndDecreaseAvailability()
+        {
+            HttpClient client = _factory.CreateClient();
+
+            List<Product> allProducts = new List<Product>
+            {
+                new Product { LeadTime = 15, Available = 30, Type = "EXPIRABLE", Name = "Butter", ExpiryDate = DateTime.Now.AddDays(26) },
+            };
+            HashSet<Product> orderItems = new(allProducts);
+            Order order = CreateOrder(orderItems);
+            await _context.Products.AddRangeAsync(allProducts);
+            _ = await _context.Orders.AddAsync(order);
+            _ = await _context.SaveChangesAsync();
+            _context.ChangeTracker.Clear();
+
+            HttpResponseMessage response = await client.PostAsync($"/orders/{order.Id}/processOrder", null);
+            _ = response.EnsureSuccessStatusCode();
+
+            Order? resultOrder = await _context.Orders.FindAsync(order.Id);
+
+            // T0DO: Improve assertion after adding product list to response DTO
+            Assert.Equal(resultOrder.Id, order.Id);
+
+            Product? resultProduct = await _context.Products.FindAsync(allProducts[0].Id);
+
+            // TODO: Improve assertion to reference product above
+            Assert.Equal(29, resultProduct.Available);
+        }
+
+        [Fact]
+        public async Task ProcessSeasonalAvailableProduct_ShouldReturnAndProductAndDecreaseAvailability()
+        {
+            HttpClient client = _factory.CreateClient();
+
+            List<Product> allProducts = new List<Product>
+            {
+                new Product { LeadTime = 15, Available = 30, Type = "SEASONAL", Name = "Watermelon", SeasonStartDate = DateTime.Now.AddDays(-2), SeasonEndDate = DateTime.Now.AddDays(58) },
             };
             HashSet<Product> orderItems = new(allProducts);
             Order order = CreateOrder(orderItems);
