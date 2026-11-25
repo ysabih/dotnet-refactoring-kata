@@ -10,20 +10,20 @@ namespace Refacto.DotNet.Controllers.Controllers
     [Route("orders")]
     public class OrdersController : ControllerBase
     {
-        private readonly ProductService _ps;
-        private readonly AppDbContext _ctx;
+        private readonly ProductService productService;
+        private readonly AppDbContext appDbContext;
 
         public OrdersController(ProductService ps, AppDbContext ctx)
         {
-            _ps = ps;
-            _ctx = ctx;
+            productService = ps;
+            appDbContext = ctx;
         }
 
         [HttpPost("{orderId}/processOrder")]
         [ProducesResponseType(200)]
         public ActionResult<ProcessOrderResponse> ProcessOrder(long orderId)
         {
-            Entities.Order? order = _ctx.Orders
+            Entities.Order? order = appDbContext.Orders
                 .Include(o => o.Items)
                 .SingleOrDefault(o => o.Id == orderId);
             Console.WriteLine(order);
@@ -37,8 +37,8 @@ namespace Refacto.DotNet.Controllers.Controllers
                     if (p.Available > 0)
                     {
                         p.Available -= 1;
-                        _ctx.Entry(p).State = EntityState.Modified;
-                        _ = _ctx.SaveChanges();
+                        appDbContext.Entry(p).State = EntityState.Modified;
+                        _ = appDbContext.SaveChanges();
 
                     }
                     else
@@ -46,7 +46,7 @@ namespace Refacto.DotNet.Controllers.Controllers
                         int leadTime = p.LeadTime;
                         if (leadTime > 0)
                         {
-                            _ps.NotifyDelay(leadTime, p);
+                            productService.NotifyDelay(leadTime, p);
                         }
                     }
                 }
@@ -55,11 +55,11 @@ namespace Refacto.DotNet.Controllers.Controllers
                     if (DateTime.Now.Date > p.SeasonStartDate && DateTime.Now.Date < p.SeasonEndDate && p.Available > 0)
                     {
                         p.Available -= 1;
-                        _ = _ctx.SaveChanges();
+                        _ = appDbContext.SaveChanges();
                     }
                     else
                     {
-                        _ps.HandleSeasonalProduct(p);
+                        productService.HandleSeasonalProduct(p);
                     }
                 }
                 else if (p.Type == "EXPIRABLE")
@@ -67,11 +67,11 @@ namespace Refacto.DotNet.Controllers.Controllers
                     if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
                     {
                         p.Available -= 1;
-                        _ = _ctx.SaveChanges();
+                        _ = appDbContext.SaveChanges();
                     }
                     else
                     {
-                        _ps.HandleExpiredProduct(p);
+                        productService.HandleExpiredProduct(p);
                     }
                 }
             }
