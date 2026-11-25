@@ -36,11 +36,24 @@ namespace Refacto.DotNet.Controllers.Services.Impl
                 }
                 else if (p.Type == "EXPIRABLE")
                 {
-                    productService.HandleExpirableProduct(p);
+                    HandleExpirableProduct(p);
                 }
             }
 
             return new ProcessOrderResponse { Id = order.Id };
+        }
+
+        private void HandleExpirableProduct(Entities.Product p)
+        {
+            if (p.Available > 0 && p.ExpiryDate > DateTime.Now.Date)
+            {
+                p.Available -= 1;
+                _ = appDbContext.SaveChanges();
+            }
+            else
+            {
+                productService.HandleExpiredProduct(p);
+            }
         }
 
         private void HandleNormalProduct(Entities.Product p)

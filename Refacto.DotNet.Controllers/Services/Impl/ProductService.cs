@@ -46,7 +46,7 @@ namespace Refacto.DotNet.Controllers.Services.Impl
 
 
 
-        public void HandleExpirableProduct(Product p)
+        public void HandleExpiredProduct(Product p)
         {
             if (p.Available > 0 && p.ExpiryDate > DateTime.Now)
             {
